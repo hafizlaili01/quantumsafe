@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Explorer: National Quantum-Safe Communication Framework</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Quantum Calm -->
+    <!-- Application Structure Plan: The application is structured into four thematic, non-linear sections (The Quantum Threat, The Framework, Implementation Strategy, National Impact) accessible via a sticky navigation bar. This approach transforms the dense report into a user-driven exploratory experience. 'The Threat' sets the context. 'The Framework' uses an interactive diagram to explain the core architecture, allowing users to click and learn about each component. 'Implementation' combines infrastructure needs with an interactive roadmap timeline. 'National Impact' synthesizes economic, R&D, and revenue opportunities using interactive charts and cards. This structure was chosen to prioritize usability and guided discovery over the report's original linear format, making complex information digestible and engaging for policymakers, technical experts, and students alike. -->
+    <!-- Visualization & Content Choices: 
+        - The Quantum Threat: Goal: Inform/Urgency. Method: Impactful text and a simple HTML/CSS diagram for the HNDL attack. Interaction: Minimal. Justification: Quickly establishes why the framework is necessary.
+        - The Framework: Goal: Organize/Explain. Method: An interactive layered diagram built with styled HTML divs. Interaction: Clicking a component dynamically updates a detailed content pane using data stored in JS objects. Justification: Breaks down the complex architecture into manageable, self-selected pieces. Library: Vanilla JS.
+        - Implementation Strategy: Goal: Show Change/Plan. Method: An interactive HTML/CSS timeline for the 1-3-5 year roadmap. Interaction: Buttons for each phase reveal associated tasks. Justification: Clearly visualizes the multi-year plan. Library: Vanilla JS.
+        - National Impact: Goal: Compare/Inform. Method: A line chart for QKD Market Growth, a donut chart for R&D Funding Models, and an interactive card layout for Revenue Streams. Interaction: Chart tooltips and clickable cards. Justification: Quantifies the economic and strategic benefits, making them more tangible. Library: Chart.js.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8; /* Warm Neutral Background */
+            color: #383A42; /* Dark Slate Text */
+        }
+        .nav-link {
+            transition: color 0.3s, border-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #0A6076; /* Muted Teal Accent */
+            border-bottom-color: #0A6076;
+        }
+        .btn-primary {
+            background-color: #0A6076;
+            color: #ffffff;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #084c5e;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border: 1px solid #EAE6E1; /* Subtle Border */
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+        }
+        .framework-component, .timeline-btn {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .framework-component.active {
+            background-color: #0A6076 !important;
+            color: #FFFFFF !important;
+            transform: scale(1.05);
+        }
+        .timeline-btn.active {
+            background-color: #0A6076;
+            color: #FFFFFF;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-200">
+        <nav class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl font-bold text-gray-800">Quantum-Safe Framework</h1>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#threat" class="nav-link px-2 py-1">The Threat</a>
+                    <a href="#framework" class="nav-link px-2 py-1">The Framework</a>
+                    <a href="#implementation" class="nav-link px-2 py-1">Implementation</a>
+                    <a href="#impact" class="nav-link px-2 py-1">National Impact</a>
+                </div>
+                <button id="mobile-menu-button" class="md:hidden p-2 rounded-md">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#threat" class="block py-2 px-4 text-sm hover:bg-gray-100">The Threat</a>
+            <a href="#framework" class="block py-2 px-4 text-sm hover:bg-gray-100">The Framework</a>
+            <a href="#implementation" class="block py-2 px-4 text-sm hover:bg-gray-100">Implementation</a>
+            <a href="#impact" class="block py-2 px-4 text-sm hover:bg-gray-100">National Impact</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="threat" class="py-16 text-center scroll-mt-16">
+            <h2 class="text-4xl md:text-5xl font-bold mb-4">The Dawn of the Quantum Threat</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600 mb-12">
+                Within the next <strong>7 to 15 years</strong>, cryptographically relevant quantum computers (CRQCs) are projected to break the encryption that secures our digital world. This isn't a future problem; it's a present vulnerability that demands immediate action.
+            </p>
+            <div class="card max-w-4xl mx-auto p-8">
+                <h3 class="text-2xl font-bold mb-4">The "Harvest Now, Decrypt Later" Attack</h3>
+                <p class="text-gray-600 mb-6">Malicious actors are actively collecting encrypted data today, storing it with the intention of decrypting it once quantum computers are available. Data with long-term sensitivity—like national security secrets, financial records, and personal health information—is already at risk.</p>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8">
+                    <div class="flex flex-col items-center">
+                        <div class="text-5xl mb-2">💾</div>
+                        <h4 class="font-semibold">Harvest</h4>
+                        <p class="text-sm text-gray-500">Encrypted data is stolen and stored.</p>
+                    </div>
+                    <div class="text-3xl text-gray-300 font-light hidden md:block">⟶</div>
+                    <div class="text-3xl text-gray-300 font-light md:hidden">↓</div>
+                    <div class="flex flex-col items-center">
+                        <div class="text-5xl mb-2">⏳</div>
+                        <h4 class="font-semibold">Wait</h4>
+                        <p class="text-sm text-gray-500">Attacker waits for powerful quantum computers.</p>
+                    </div>
+                     <div class="text-3xl text-gray-300 font-light hidden md:block">⟶</div>
+                     <div class="text-3xl text-gray-300 font-light md:hidden">↓</div>
+                    <div class="flex flex-col items-center">
+                        <div class="text-5xl mb-2">🔓</div>
+                        <h4 class="font-semibold">Decrypt</h4>
+                        <p class="text-sm text-gray-500">Past secrets are revealed.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="framework" class="py-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">A Multi-Layered Defense Framework</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">This framework uses a hybrid approach, combining Quantum Key Distribution (QKD) and Post-Quantum Cryptography (PQC) for robust, layered security. Explore the architecture by clicking on any component below to learn more about its role in securing our national infrastructure.</p>
+            </div>
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="w-full lg:w-1/2">
+                    <div class="space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="p-4 bg-blue-100 text-blue-800 rounded-lg text-center font-semibold framework-component" data-component="layer5">Layer 5: Applications & Services</div>
+                        <div class="p-4 bg-green-100 text-green-800 rounded-lg text-center font-semibold framework-component" data-component="layer4">Layer 4: Key Management & Orchestration</div>
+                        <div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg text-center font-semibold framework-component" data-component="layer3">Layer 3: Cryptographic Services</div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                           <div class="p-2 bg-yellow-50 text-yellow-700 rounded text-center text-sm framework-component" data-component="l1_encrypt">L1 OTN Encryption</div>
+                           <div class="p-2 bg-yellow-50 text-yellow-700 rounded text-center text-sm framework-component" data-component="app_encrypt">App Encryption (PQC)</div>
+                           <div class="p-2 bg-yellow-50 text-yellow-700 rounded text-center text-sm framework-component" data-component="qrng_service">QRNG</div>
+                        </div>
+                        <div class="p-4 bg-purple-100 text-purple-800 rounded-lg text-center font-semibold framework-component" data-component="layer2">Layer 2: Quantum & Classical Interface</div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                           <div class="p-2 bg-purple-50 text-purple-700 rounded text-center text-sm framework-component" data-component="qkd_appl">QKD Appliances</div>
+                           <div class="p-2 bg-purple-50 text-purple-700 rounded text-center text-sm framework-component" data-component="pqc_mod">PQC Modules</div>
+                           <div class="p-2 bg-purple-50 text-purple-700 rounded text-center text-sm framework-component" data-component="qrng_dev">QRNG Devices</div>
+                        </div>
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg text-center font-semibold framework-component" data-component="layer1">Layer 1: Quantum & Classical Transport</div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                           <div class="p-2 bg-red-50 text-red-700 rounded text-center text-sm framework-component" data-component="fiber">Fiber Links</div>
+                           <div class="p-2 bg-red-50 text-red-700 rounded text-center text-sm framework-component" data-component="freespace">Free-Space</div>
+                           <div class="p-2 bg-red-50 text-red-700 rounded text-center text-sm framework-component" data-component="otn_net">OTN Network</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full lg:w-1/2">
+                    <div id="framework-details" class="card p-6 min-h-[300px]">
+                        <div id="framework-visual" class="text-6xl text-center mb-4"></div>
+                        <h3 id="framework-title" class="text-2xl font-bold mb-3">Select a Component</h3>
+                        <p id="framework-text" class="text-gray-600">Click on a component in the diagram to the left to see its detailed description and role within the national quantum-safe framework.</p>
+                        <button id="explain-more-btn" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                            ✨ Explain More
+                        </button>
+                        <div id="llm-explanation" class="mt-4 p-4 bg-gray-50 rounded-md hidden">
+                            <p class="text-gray-700 italic" id="llm-text"></p>
+                            <div id="llm-loading" class="text-center text-gray-500 mt-2 hidden">Generating explanation...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="implementation" class="py-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">The Path to a Quantum-Safe Nation</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">Implementation is a strategic journey, not a single step. The roadmap below outlines a phased approach to build out the framework, from initial pilots to full national deployment over five years. Select a phase to view its key objectives.</p>
+            </div>
+            <div class="flex justify-center mb-8">
+                <div class="flex space-x-2 p-1 bg-gray-100 rounded-full">
+                    <button class="timeline-btn px-4 py-2 rounded-full font-semibold text-gray-600" data-phase="1">Year 1</button>
+                    <button class="timeline-btn px-4 py-2 rounded-full font-semibold text-gray-600" data-phase="3">Year 3</button>
+                    <button class="timeline-btn px-4 py-2 rounded-full font-semibold text-gray-600" data-phase="5">Year 5</button>
+                </div>
+            </div>
+            <div id="timeline-details" class="card max-w-4xl mx-auto p-8">
+                 <h3 id="timeline-title" class="text-2xl font-bold mb-4">Select a Phase</h3>
+                 <p id="timeline-text" class="text-gray-600">Click a button above to see the implementation milestones for that period.</p>
+                 <ul id="timeline-list" class="list-disc list-inside space-y-2 text-gray-700 mt-4"></ul>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+        
+        <section id="impact" class="py-16 scroll-mt-16">
+             <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">National Impact & Opportunity</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">This initiative is more than a defense strategy; it's a catalyst for economic growth, technological sovereignty, and workforce development. It will spur innovation across multiple strategic industries and create new revenue streams.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-center mb-4">Projected QKD Market Growth (USD Billions)</h3>
+                    <div class="chart-container">
+                        <canvas id="market-growth-chart"></canvas>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-center mb-4">Proposed R&D Funding Model</h3>
+                     <div class="chart-container">
+                        <canvas id="rd-funding-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12">
+                 <h3 class="text-2xl font-bold text-center mb-8">Revenue Streams by Technology Stack</h3>
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg mb-2">Fiber QKD System</h4>
+                        <p class="text-sm text-gray-600">Secure critical telecom links, banking, and data centers via "Quantum-Safe as a Service" models and hardware sales.</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg mb-2">Free Space QKD</h4>
+                        <p class="text-sm text-gray-600">Provide satellite-based global key exchange and drone-based temporary links for VIPs, disaster recovery, and 5G backhaul.</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg mb-2">QRNG + PQC Stack</h4>
+                        <p class="text-sm text-gray-600">License QRNG chips and PQC libraries to cloud providers, IoT device makers, and financial services. Offer "Entropy-as-a-Service".</p>
+                    </div>
+                     <div class="card p-6">
+                        <h4 class="font-bold text-lg mb-2">Physical Layer OTN Encryption</h4>
+                        <p class="text-sm text-gray-600">Offer managed Layer 1 encryption services and sell secure data transport platforms to telcos and cloud providers.</p>
+                    </div>
+                     <div class="card p-6">
+                        <h4 class="font-bold text-lg mb-2">Key Management Platform (KMP)</h4>
+                        <p class="text-sm text-gray-600">Provide subscription-based access to Key Management APIs, eGov integration, and enterprise key lifecycle management.</p>
+                    </div>
+                     <div class="card p-6">
+                        <h4 class="font-bold text-lg mb-2">Talent & Startups</h4>
+                        <p class="text-sm text-gray-600">Foster local cybersecurity startups for PQC migration and build a high-value talent pipeline in photonics and cryptography.</p>
+                    </div>
+                 </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto p-8 text-center">
+            <p>&copy; 2025 National Quantum-Safe Initiative. This interactive report is for informational purposes.</p>
+            <p class="text-sm text-gray-400 mt-2">A conceptual visualization based on the National Quantum-Safe Communication Framework report.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const contentData = {
+                framework: {
+                    default: { title: "Select a Component", text: "Click on a component in the diagram to see its detailed description and role within the national quantum-safe framework.", visual: "👆" },
+                    layer5: { title: "Layer 5: Applications & Services", text: "This is the user-facing layer, encompassing all critical infrastructure applications that rely on secure communication. This includes financial systems, e-Government services, healthcare data platforms, SCADA/OT for utilities, and future 5G/6G mobile networks.", visual: "💻🌐" },
+                    layer4: { title: "Layer 4: Key Management & Orchestration", text: "The brain of the framework. A centralized Quantum Key Management Platform (Q-KMP) manages the entire lifecycle of keys from both QKD and PQC systems. It handles key generation requests, secure storage, distribution, and rotation, ensuring crypto-agility.", visual: "🔑⚙️" },
+                    layer3: { title: "Layer 3: Cryptographic Services", text: "This layer provides the actual cryptographic functions. It includes hardware appliances for encrypting data at the physical transport layer (L1 OTN), software modules for application-level encryption using PQC, and Quantum Random Number Generators (QRNG) to supply true randomness for strong keys.", visual: "🔒🛡️" },
+                    l1_encrypt: { title: "L1 OTN Encryption", text: "Provides always-on encryption directly on the optical transport network (Layer 1). It's transparent to traffic, adding minimal delay while protecting against physical fiber tapping.", visual: "⚡🔒" },
+                    app_encrypt: { title: "Application Encryption (PQC)", text: "Software-based encryption using NIST-standardized Post-Quantum Cryptography algorithms (like Kyber and Dilithium) to secure data within applications, ensuring confidentiality and authentication.", visual: "📄🔒" },
+                    qrng_service: { title: "Quantum Random Number Generator (QRNG)", text: "Generates true, unpredictable random numbers based on quantum phenomena. This high-quality entropy is essential for creating strong, un-guessable cryptographic keys for both QKD and PQC systems.", visual: "🎲✨" },
+                    layer2: { title: "Layer 2: Quantum & Classical Interface", text: "This layer contains the hardware and software that generate and process quantum-safe materials. It includes the QKD 'Alice' and 'Bob' appliances that produce quantum keys, PQC modules that execute quantum-resistant algorithms, and the physical QRNG devices.", visual: "↔️🔬" },
+                    qkd_appl: { title: "QKD Appliances", text: "The hardware systems (often called 'Alice' and 'Bob') that send and receive single photons to establish a shared, secret key based on the laws of quantum physics. Eavesdropping attempts disturb the quantum state, making them detectable.", visual: "⚛️🔗" },
+                    pqc_mod: { title: "PQC Modules", text: "Software or hardware modules that implement the new class of mathematical algorithms (PQC) designed to be resistant to attacks by both classical and quantum computers. They provide functions like key exchange and digital signatures.", visual: "🔢🛡️" },
+                    qrng_dev: { title: "QRNG Devices", text: "The physical hardware that harnesses quantum effects (like photon emissions or vacuum fluctuations) to produce a constant stream of truly random bits, which are then fed into the cryptographic services layer.", visual: "💡🎲" },
+                    layer1: { title: "Layer 1: Quantum & Classical Transport", text: "The physical foundation of the network. This includes the national Optical Transport Network (OTN), dedicated 'dark fiber' links for QKD, existing fibers using Wavelength Division Multiplexing (WDM), and free-space optical links via satellites or drones.", visual: "📡〰️" },
+                    fiber: { title: "Fiber Links", text: "The primary medium for terrestrial QKD. Can be dedicated dark fiber for maximum performance or integrated with existing data traffic over a single fiber using Wavelength Division Multiplexing (WDM).", visual: "〰️💡〰️" },
+                    freespace: { title: "Free-Space Links", text: "Using satellites for intercontinental range or drones/UAVs for mobile or 'last-mile' connections. Essential for extending QKD beyond the limits of fiber and reaching remote locations.", visual: "🛰️📡" },
+                    otn_net: { title: "OTN Network", text: "The underlying national Optical Transport Network that carries the vast majority of digital data. Quantum-safe solutions are designed to integrate with and protect this critical infrastructure.", visual: "🌐📊" }
+                },
+                timeline: {
+                    default: { title: "Select a Phase", text: "Click a button above to see the implementation milestones for that period.", list: [] },
+                    '1': { 
+                        title: "Year 1: Foundation & Pilot Deployment",
+                        text: "Focus on strategic planning, adopting standards, and initiating proof-of-concept projects to build a solid foundation.",
+                        list: [
+                            "Establish a national quantum-safe task force.",
+                            "Formalize adoption of NIST PQC standards.",
+                            "Launch targeted R&D into hybrid cryptography.",
+                            "Initiate QKD-PQC pilot projects for critical data center interconnects.",
+                            "Begin building the talent pipeline through university partnerships."
+                        ]
+                    },
+                    '3': { 
+                        title: "Year 3: Regional Expansion & Ecosystem Development",
+                        text: "Scale up deployments based on pilot learnings and foster a domestic industrial base for quantum technologies.",
+                        list: [
+                            "Expand hybrid QKD-PQC deployments to cover regional government and financial networks.",
+                            "Commence free-space QKD pilots using drones and satellites.",
+                            "Intensify R&D in long-distance QKD stabilization and key management.",
+                            "Establish incentives for local manufacturing of QKD components and QRNG chips.",
+                            "Foster growth of domestic cybersecurity startups specializing in PQC migration."
+                        ]
+                    },
+                    '5': {
+                        title: "Year 5: National-Scale Integration & Global Leadership",
+                        text: "Achieve widespread deployment across most critical infrastructure, including 5G/6G networks.",
+                        list: [
+                            "Achieve full deployment across most critical infrastructure, including 5G/6G networks.",
+                            "Implement a national-scale, multi-vendor Key Management Platform (KMP).",
+                            "Integrate fault-tolerant QKD+PQC key mixing mechanisms into operational systems.",
+                            "Establish a self-sustaining talent pipeline and thriving domestic quantum industry.",
+                            "Explore strategic export of nationalized quantum-safe protocols and toolkits."
+                        ]
+                    }
+                }
+            };
+
+            const frameworkVisual = document.getElementById('framework-visual');
+            const frameworkTitle = document.getElementById('framework-title');
+            const frameworkText = document.getElementById('framework-text');
+            const frameworkComponents = document.querySelectorAll('.framework-component');
+            const explainMoreBtn = document.getElementById('explain-more-btn');
+            const llmExplanationDiv = document.getElementById('llm-explanation');
+            const llmText = document.getElementById('llm-text');
+            const llmLoading = document.getElementById('llm-loading');
+
+            frameworkComponents.forEach(component => {
+                component.addEventListener('click', () => {
+                    const componentId = component.dataset.component;
+                    const data = contentData.framework[componentId];
+
+                    frameworkComponents.forEach(c => c.classList.remove('active'));
+                    component.classList.add('active');
+                    
+                    frameworkVisual.innerHTML = data.visual;
+                    frameworkTitle.textContent = data.title;
+                    frameworkText.textContent = data.text;
+                    
+                    // Reset LLM explanation area
+                    llmExplanationDiv.classList.add('hidden');
+                    llmText.textContent = '';
+                    llmLoading.classList.add('hidden');
+                });
+            });
+
+            explainMoreBtn.addEventListener('click', async () => {
+                llmExplanationDiv.classList.remove('hidden');
+                llmText.textContent = '';
+                llmLoading.classList.remove('hidden');
+
+                const title = frameworkTitle.textContent;
+                const text = frameworkText.textContent;
+                const prompt = `Explain the following concept from a cybersecurity framework in simpler, more accessible terms, assuming the audience is generally tech-savvy but not necessarily a quantum expert:\n\nTitle: ${title}\nDescription: ${text}\n\nProvide a concise explanation, focusing on its purpose and importance within a national quantum-safe communication framework.`;
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; // Canvas will automatically provide this in runtime
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const explanation = result.candidates[0].content.parts[0].text;
+                        llmText.textContent = explanation;
+                    } else {
+                        llmText.textContent = "Could not generate explanation. Please try again.";
+                        console.error("Gemini API response structure unexpected:", result);
+                    }
+                } catch (error) {
+                    llmText.textContent = "Error generating explanation. Please check your network connection or try again later.";
+                    console.error("Error calling Gemini API:", error);
+                } finally {
+                    llmLoading.classList.add('hidden');
+                }
+            });
+            
+            const timelineTitle = document.getElementById('timeline-title');
+            const timelineText = document.getElementById('timeline-text');
+            const timelineList = document.getElementById('timeline-list');
+            const timelineBtns = document.querySelectorAll('.timeline-btn');
+
+            timelineBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const phase = btn.dataset.phase;
+                    const data = contentData.timeline[phase];
+
+                    timelineBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    timelineTitle.textContent = data.title;
+                    timelineText.textContent = data.text;
+                    timelineList.innerHTML = data.list.map(item => `<li>${item}</li>`).join('');
+                });
+            });
+            
+            timelineBtns[0].click();
+            // Set default content for framework details on load
+            frameworkVisual.innerHTML = contentData.framework.default.visual;
+            frameworkTitle.textContent = contentData.framework.default.title;
+            frameworkText.textContent = contentData.framework.default.text;
+
+
+            const marketGrowthCtx = document.getElementById('market-growth-chart').getContext('2d');
+            new Chart(marketGrowthCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['2024', '2033'],
+                    datasets: [{
+                        label: 'Market Size (USD Billions)',
+                        data: [1.51, 21.67],
+                        backgroundColor: ['rgba(10, 96, 118, 0.6)', 'rgba(10, 96, 118, 0.8)'],
+                        borderColor: ['#0A6076', '#0A6076'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'USD Billions'
+                            }
+                        }
+                    }
+                }
+            });
+
+            const rdFundingCtx = document.getElementById('rd-funding-chart').getContext('2d');
+            new Chart(rdFundingCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Public-Private Partnerships', 'Government-Backed', 'Academia-Led'],
+                    datasets: [{
+                        data: [40, 35, 25],
+                        backgroundColor: ['#0A6076', '#5DA8B9', '#A8DADC'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        title: {
+                            display: false,
+                        }
+                    }
+                }
+            });
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if(mobileMenu.classList.contains('hidden') === false){
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
